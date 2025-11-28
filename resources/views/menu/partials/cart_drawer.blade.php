@@ -65,10 +65,17 @@
                     <div class="border-t border-slate-100 p-6 bg-white">
                         <div class="flex justify-between text-xl font-black text-slate-900 mb-4">
                             <p>Total</p>
-                            <p x-text="'S/ ' + total"></p>
+                            <p x-text="'S/ ' + parseFloat(total).toFixed(2)"></p>
                         </div>
                         <div class="space-y-3">
-                            <button class="w-full rounded-xl bg-sky-600 px-6 py-4 text-base font-bold text-white shadow-lg hover:bg-sky-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed" :disabled="cart.length === 0">
+
+                            <button
+                                @click="
+                                    localStorage.setItem('ucss_food_cart', JSON.stringify(cart));
+                                    window.location.href = '{{ route('checkout.index') }}'
+                                "
+                                class="w-full rounded-xl bg-sky-600 px-6 py-4 text-base font-bold text-white shadow-lg hover:bg-sky-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                :disabled="cart.length === 0">
                                 PAGAR PEDIDO
                             </button>
                             <button @click="clearCart()" x-show="cart.length > 0" class="w-full text-center text-xs font-bold text-red-400 hover:text-red-600">VACIAR CARRITO</button>

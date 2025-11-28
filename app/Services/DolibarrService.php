@@ -95,4 +95,85 @@ class DolibarrService
 
         return null;
     }
+
+    public function createOrder($socid, $lines)
+    {
+        // Estructura para Dolibarr
+        $data = [
+            'socid' => $socid,
+            'date' => time(),
+            'type' => 0, // 0 = Pedido estándar
+            'lines' => $lines, // Array de productos
+            'note_public' => 'Pedido generado desde Web UCSS FOOD',
+        ];
+
+        try {
+            $response = Http::withHeaders([
+                'DOLAPIKEY' => $this->apiKey,
+                'Accept' => 'application/json',
+            ])->post($this->baseUrl . '/orders', $data);
+
+            if ($response->successful()) {
+                return $response->json(); // Devuelve el ID del pedido (string o int)
+            }
+
+            // Para debuggear si falla
+            // \Log::error('Error creando pedido Dolibarr: ' . $response->body());
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        return null;
+    }
+
+    /**
+     * Validar el pedido para que descuente Stock
+     */
+    public function validateOrder($orderId, $warehouseId = 1)
+    {
+        $data = [
+            'idwarehouse' => $warehouseId
+        ];
+
+        try {
+            $response = Http::withHeaders([
+                'DOLAPIKEY' => $this->apiKey,
+                'Accept' => 'application/json',
+            ])->post($this->baseUrl . '/orders/' . $orderId . '/validate', $data);
+
+            return $response->successful();
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+
+    public function findThirdPartyByEmail($email)
+    {
+        $sqlFilter = "(t.email:like:'" . $email . "')";
+
+        $params = [
+            'sqlfilters' => $sqlFilter,
+            'limit' => 1
+        ];
+
+        try {
+            $response = Http::withHeaders([
+                'DOLAPIKEY' => $this->apiKey,
+                'Accept'    => 'application/json',
+            ])->get($this->baseUrl . '/thirdparties', $params);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                if (is_array($data) && count($data) > 0) {
+                    return $data[0]['id'];
+                }
+            }
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        return null;
+    }
+
 }

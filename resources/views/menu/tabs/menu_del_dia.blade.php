@@ -1,151 +1,143 @@
-<div class="mt-8">
-    <div class="bg-gradient-to-r from-sky-600 to-blue-800 rounded-3xl p-8 mb-12 text-white shadow-xl relative overflow-hidden">
-        <div class="absolute right-0 top-0 h-full w-1/3 bg-white/5 skew-x-12 transform origin-bottom-left"></div>
-        <div class="relative z-10 flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
-            <div class="bg-white/20 p-4 rounded-full backdrop-blur-sm shadow-inner">
-                <span class="text-4xl">🔥</span>
-            </div>
-            <div>
-                <h3 class="text-3xl font-black tracking-tight">Arma tu Menú</h3>
-                <p class="text-sky-100 font-medium text-lg mt-1">Entrada + Fondo + Refresco por <span class="bg-white text-sky-800 px-3 py-1 rounded-lg font-black shadow-sm">S/ 12.00</span></p>
+<div class="mt-6 pb-32 relative">
+
+    <div class="relative bg-white border border-slate-200 rounded-2xl p-6 mb-10 shadow-sm overflow-hidden group">
+        <div class="relative z-10">
+            <span class="inline-block px-3 py-1 bg-sky-100 text-sky-700 rounded-full text-xs font-bold mb-2 tracking-wide">MENÚ EJECUTIVO</span>
+            <h2 class="text-3xl font-black text-slate-800">Arma tu Almuerzo</h2>
+            <div class="flex items-center gap-2 mt-1">
+                <p class="text-slate-500 font-medium">Entrada + Segundo + Refresco por:</p>
+                <span class="text-2xl font-black text-sky-600">S/ <span x-text="totalMenuDelDia"></span></span>
             </div>
         </div>
     </div>
 
-    <div class="mb-16">
-        <div class="flex items-center gap-3 mb-6">
-            <span class="bg-sky-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-lg shadow-sky-200">1</span>
-            <h3 class="text-xl font-bold text-slate-800">Elige tu Entrada</h3>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div class="mb-12 scroll-mt-24">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 items-start">
             @forelse($entradas as $entrada)
-                <label class="cursor-pointer relative group h-full">
-                    <input type="radio" name="entrada" x-model="selectedEntrada" value="{{ $entrada['label'] }}" class="hidden">
+                <label class="block cursor-pointer group relative h-full">
+                    <input type="radio"
+                           name="entrada"
+                           x-model="selectedEntrada"
+                           value="{{ $entrada['label'] }}"
+                           @change="selectedEntradaPrice = {{ $entrada['price'] }}"
+                           class="peer hidden">
 
-                    <div class="bg-white rounded-3xl transition-all duration-300 h-full flex flex-col overflow-hidden relative group-hover:-translate-y-1"
-                         :class="selectedEntrada === '{{ $entrada['label'] }}'
-                            ? 'ring-4 ring-sky-500 shadow-xl shadow-sky-100'
-                            : 'ring-1 ring-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-lg'">
+                    <div class="bg-white border-2 border-slate-100 rounded-2xl overflow-hidden transition-all duration-300 h-full flex flex-col hover:border-sky-400 hover:shadow-xl peer-checked:border-sky-600 peer-checked:ring-4 peer-checked:ring-sky-200 peer-checked:shadow-2xl peer-checked:shadow-sky-200/50 peer-checked:scale-105">
 
-                        <div class="h-40 overflow-hidden relative">
-                            <img src="{{ route('product.image', $entrada['ref']) }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-
-                            <div x-show="selectedEntrada === '{{ $entrada['label'] }}'"
-                                 x-transition.scale
-                                 class="absolute inset-0 bg-sky-600/30 backdrop-blur-[1px] flex items-center justify-center">
-                                <div class="bg-white text-sky-600 rounded-full p-2 shadow-lg">
-                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                                </div>
-                            </div>
+                         <div class="absolute top-3 right-3 z-20 bg-sky-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg opacity-0 scale-0 peer-checked:opacity-100 peer-checked:scale-100 transition-all duration-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                         </div>
 
-                        <div class="p-4 text-center flex-1 flex items-center justify-center bg-gradient-to-b from-white to-slate-50">
-                            <h4 class="font-bold text-slate-700 text-sm leading-tight">{{ $entrada['label'] }}</h4>
+                        <div class="h-44 w-full relative bg-gray-50 overflow-hidden">
+                            <img src="{{ route('product.image', $entrada['ref']) }}" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 peer-checked:scale-105">
+                            <div class="absolute inset-0 bg-sky-600/10 opacity-0 peer-checked:opacity-100 transition-opacity duration-300"></div>
+                        </div>
+
+                        <div class="p-4 text-center flex-1 flex flex-col items-center justify-center transition-all duration-300 peer-checked:bg-sky-50">
+                            <h4 class="font-bold text-slate-700 text-sm group-hover:text-sky-700 transition-colors peer-checked:text-sky-800">{{ $entrada['label'] }}</h4>
+                            <span class="text-xs text-sky-600 font-bold mt-1 peer-checked:text-sky-700">+ S/ {{ number_format($entrada['price'], 2) }}</span>
                         </div>
                     </div>
                 </label>
             @empty
-                <p class="col-span-full text-center text-slate-400">No hay entradas disponibles.</p>
             @endforelse
         </div>
     </div>
 
-    <div class="mb-16 opacity-50 transition-opacity duration-300" :class="{'opacity-100': selectedEntrada}">
-        <div class="flex items-center gap-3 mb-6">
-            <span class="bg-sky-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-lg shadow-sky-200">2</span>
-            <h3 class="text-xl font-bold text-slate-800">Elige tu Fondo</h3>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div class="mb-12 transition-all duration-500" :class="selectedEntrada ? 'opacity-100' : 'opacity-40 grayscale pointer-events-none'">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 items-start">
             @forelse($fondos as $fondo)
-                <label class="cursor-pointer relative group h-full">
-                    <input type="radio" name="fondo" x-model="selectedFondo" value="{{ $fondo['label'] }}" class="hidden" :disabled="!selectedEntrada">
+                <label class="block cursor-pointer group relative h-full">
+                    <input type="radio"
+                           name="fondo"
+                           x-model="selectedFondo"
+                           value="{{ $fondo['label'] }}"
+                           @change="selectedFondoPrice = {{ $fondo['price'] }}"
+                           class="peer hidden"
+                           :disabled="!selectedEntrada">
 
-                    <div class="bg-white rounded-3xl transition-all duration-300 h-full flex flex-col overflow-hidden relative group-hover:-translate-y-1"
-                         :class="selectedFondo === '{{ $fondo['label'] }}'
-                            ? 'ring-4 ring-sky-500 shadow-xl shadow-sky-100'
-                            : 'ring-1 ring-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-lg'">
+                    <div class="bg-white border-2 border-slate-100 rounded-2xl overflow-hidden transition-all duration-300 h-full flex flex-col hover:border-sky-400 hover:shadow-xl peer-checked:border-sky-600 peer-checked:ring-4 peer-checked:ring-sky-200 peer-checked:shadow-2xl peer-checked:shadow-sky-200/50 peer-checked:scale-105">
 
-                        <div class="h-40 overflow-hidden relative">
-                            <img src="{{ route('product.image', $fondo['ref']) }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-
-                            <div x-show="selectedFondo === '{{ $fondo['label'] }}'"
-                                 x-transition.scale
-                                 class="absolute inset-0 bg-sky-600/30 backdrop-blur-[1px] flex items-center justify-center">
-                                <div class="bg-white text-sky-600 rounded-full p-2 shadow-lg">
-                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                                </div>
-                            </div>
+                        <div class="absolute top-3 right-3 z-20 bg-sky-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg opacity-0 scale-0 peer-checked:opacity-100 peer-checked:scale-100 transition-all duration-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                         </div>
 
-                        <div class="p-4 text-center flex-1 flex items-center justify-center bg-gradient-to-b from-white to-slate-50">
-                            <h4 class="font-bold text-slate-700 text-sm leading-tight">{{ $fondo['label'] }}</h4>
+                        <div class="h-44 w-full relative bg-gray-50 overflow-hidden">
+                            <img src="{{ route('product.image', $fondo['ref']) }}" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 peer-checked:scale-105">
+                            <div class="absolute inset-0 bg-sky-600/10 opacity-0 peer-checked:opacity-100 transition-opacity duration-300"></div>
+                        </div>
+
+                        <div class="p-4 text-center flex-1 flex flex-col items-center justify-center transition-all duration-300 peer-checked:bg-sky-50">
+                            <h4 class="font-bold text-slate-700 text-sm group-hover:text-sky-700 transition-colors peer-checked:text-sky-800">{{ $fondo['label'] }}</h4>
+                            <span class="text-xs text-sky-600 font-bold mt-1 peer-checked:text-sky-700">+ S/ {{ number_format($fondo['price'], 2) }}</span>
                         </div>
                     </div>
                 </label>
             @empty
-                <p class="col-span-full text-center text-slate-400">No hay fondos disponibles.</p>
             @endforelse
         </div>
     </div>
 
-    <div class="mb-32 opacity-50 transition-opacity duration-300" :class="{'opacity-100': selectedFondo}">
-        <div class="flex items-center gap-3 mb-6">
-            <span class="bg-sky-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-lg shadow-sky-200">3</span>
-            <h3 class="text-xl font-bold text-slate-800">Elige tu Refresco (Cortesía)</h3>
-        </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+    <div class="mb-12 transition-all duration-500" :class="selectedFondo ? 'opacity-100' : 'opacity-40 grayscale pointer-events-none'">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 items-start">
             @forelse($refrescos as $refresco)
-                <label class="cursor-pointer relative group h-full">
-                    <input type="radio" name="refresco" x-model="selectedRefresco" value="{{ $refresco['label'] }}" class="hidden" :disabled="!selectedFondo">
+                <label class="block cursor-pointer group relative h-full">
+                    <input type="radio"
+                           name="refresco"
+                           x-model="selectedRefresco"
+                           value="{{ $refresco['label'] }}"
+                           @change="selectedRefrescoPrice = {{ $refresco['price'] }}"
+                           class="peer hidden"
+                           :disabled="!selectedFondo">
 
-                    <div class="bg-white rounded-2xl transition-all duration-300 h-full flex flex-col overflow-hidden relative group-hover:-translate-y-1"
-                         :class="selectedRefresco === '{{ $refresco['label'] }}'
-                            ? 'ring-4 ring-sky-500 shadow-xl shadow-sky-100'
-                            : 'ring-1 ring-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-lg'">
+                    <div class="bg-white border-2 border-slate-100 rounded-2xl overflow-hidden transition-all duration-300 h-full flex flex-col hover:border-sky-400 hover:shadow-xl peer-checked:border-sky-600 peer-checked:ring-4 peer-checked:ring-sky-200 peer-checked:shadow-2xl peer-checked:shadow-sky-200/50 peer-checked:scale-105">
 
-                        <div class="h-24 sm:h-32 overflow-hidden relative bg-sky-50 flex items-center justify-center p-2">
-                             <img src="{{ route('product.image', $refresco['ref']) }}" class="h-full w-full object-contain group-hover:scale-110 transition-transform duration-500">
-
-                            <div x-show="selectedRefresco === '{{ $refresco['label'] }}'"
-                                 x-transition.scale
-                                 class="absolute inset-0 bg-sky-600/30 backdrop-blur-[1px] flex items-center justify-center">
-                                <div class="bg-white text-sky-600 rounded-full p-1.5 shadow-lg">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                                </div>
-                            </div>
+                         <div class="absolute top-2 right-2 z-20 bg-sky-600 text-white rounded-full w-7 h-7 flex items-center justify-center shadow-lg opacity-0 scale-0 peer-checked:opacity-100 peer-checked:scale-100 transition-all duration-300">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                         </div>
 
-                        <div class="p-3 text-center flex-1 flex items-center justify-center bg-white">
-                            <h4 class="font-bold text-slate-700 text-xs sm:text-sm leading-tight">{{ $refresco['label'] }}</h4>
+                        <div class="h-36 w-full relative bg-sky-50/30 p-2 overflow-hidden flex items-center justify-center">
+                            <img src="{{ route('product.image', $refresco['ref']) }}" class="h-full w-full object-contain transition-transform duration-700 group-hover:scale-110 peer-checked:scale-105">
+                            <div class="absolute inset-0 bg-sky-600/10 opacity-0 peer-checked:opacity-100 transition-opacity duration-300"></div>
+                        </div>
+
+                        <div class="p-3 text-center flex-1 flex flex-col items-center justify-center bg-white transition-all duration-300 peer-checked:bg-sky-50">
+                            <h4 class="font-bold text-slate-700 text-xs sm:text-sm leading-tight group-hover:text-sky-700 transition-colors peer-checked:text-sky-800">{{ $refresco['label'] }}</h4>
+                            <span class="text-[10px] text-sky-600 font-bold mt-1 peer-checked:text-sky-700">+ S/ {{ number_format($refresco['price'], 2) }}</span>
                         </div>
                     </div>
                 </label>
             @empty
-                <p class="col-span-full text-center text-slate-400">No hay refrescos disponibles.</p>
             @endforelse
         </div>
     </div>
 
-    <div x-show="selectedEntrada && selectedFondo && selectedRefresco"
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 translate-y-10"
-         x-transition:enter-end="opacity-100 translate-y-0"
-         class="fixed bottom-6 left-0 right-0 z-40 flex justify-center px-4 pointer-events-none">
+</div>
+<div x-show="selectedEntrada && selectedFondo && selectedRefresco"
+     x-transition:enter="transition ease-[cubic-bezier(0.34,1.56,0.64,1)] duration-500"
+     x-transition:enter-start="opacity-0 translate-y-20 scale-90"
+     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+     class="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
 
-        <button @click="addToCart('Menú: ' + selectedEntrada + ' + ' + selectedFondo + ' + ' + selectedRefresco, 12.00)"
-                class="pointer-events-auto bg-sky-700 text-white px-8 py-4 rounded-full font-bold shadow-2xl shadow-sky-900/20 hover:bg-sky-800 hover:scale-105 transition-all flex items-center gap-4 border-4 border-white ring-1 ring-slate-200 group">
+    <button
+        @click="addToCart(
+            Date.now(),
+            'Menú: ' + selectedEntrada + ' + ' + selectedFondo + ' + ' + selectedRefresco,
+            totalMenuDelDia
+        )"
+        class="pointer-events-auto bg-slate-900 text-white rounded-full p-2 pr-8 shadow-2xl shadow-sky-900/50 hover:scale-105 transition-transform duration-300 flex items-center gap-4 border-4 border-white ring-1 ring-slate-200">
 
-            <div class="flex flex-col items-start leading-none">
-                <span class="text-[10px] text-sky-200 font-medium tracking-wider">TODO LISTO</span>
-                <span class="text-base">AGREGAR MENÚ COMPLETO</span>
-            </div>
+        <div class="bg-sky-500 text-white w-14 h-14 rounded-full flex items-center justify-center font-black text-xl shadow-inner">
+            S/<span x-text="totalMenuDelDia"></span>
+        </div>
 
-            <div class="bg-white text-sky-800 px-3 py-1.5 rounded-lg font-black text-lg shadow-sm group-hover:bg-sky-50 transition-colors">
-                S/ 12.00
-            </div>
-        </button>
-    </div>
+        <div class="flex flex-col items-start text-left">
+            <span class="text-[11px] text-sky-300 font-bold uppercase tracking-wider">¡Menú Listo!</span>
+            <span class="text-lg font-bold text-white leading-none">AÑADIR AL CARRITO</span>
+        </div>
+
+        <div class="ml-2 animate-bounce-x">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </div>
+    </button>
 </div>
