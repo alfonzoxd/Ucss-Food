@@ -28,106 +28,144 @@
     </div>
 
     <script>
-    function cafeteriaApp() {
-        return {
-            activeTab: 'menu_del_dia',
+function cafeteriaApp() {
+    return {
+        activeTab: 'menu_del_dia',
 
-            // --- VARIABLES DEL MENÚ DEL DÍA (LO QUE FALTABA) ---
-            selectedEntrada: null,
-            selectedEntradaPrice: 0, // Nuevo
+        // Variables del Menú del Día
+        selectedEntrada: null,
+        selectedEntradaPrice: 0,
+        selectedEntradaId: null,  // ← NUEVO
 
-            selectedFondo: null,
-            selectedFondoPrice: 0,   // Nuevo
+        selectedFondo: null,
+        selectedFondoPrice: 0,
+        selectedFondoId: null,    // ← NUEVO
 
-            selectedRefresco: null,
-            selectedRefrescoPrice: 0, // Nuevo
+        selectedRefresco: null,
+        selectedRefrescoPrice: 0,
+        selectedRefrescoId: null, // ← NUEVO
 
-            // --- VARIABLES DEL CARRITO ---
-            cart: [],
-            isCartOpen: false,
+        cart: [],
+        isCartOpen: false,
 
-            initApp() {
-                // Cargar carrito guardado
-                const stored = localStorage.getItem('ucss_food_cart');
-                if (stored) {
-                    this.cart = JSON.parse(stored);
-                }
-
-                this.updateCartCounter();
-
-                window.addEventListener('open-cart-drawer', () => {
-                    this.isCartOpen = true;
-                });
-            },
-
-            // --- ESTA ES LA FUNCIÓN QUE TE FALTABA Y CAUSABA EL ERROR ---
-            get totalMenuDelDia() {
-                let total = this.selectedEntradaPrice + this.selectedFondoPrice + this.selectedRefrescoPrice;
-                return total.toFixed(2);
-            },
-
-            addToCart(id, itemName, itemPrice, qty = 1) {
-                // Validación: Si es el menú del día, verificar que esté completo
-                if (itemName.includes('Menú:') && itemPrice == 0) {
-                    alert('Por favor selecciona Entrada, Segundo y Refresco.');
-                    return;
-                }
-
-                let existingItem = this.cart.find(item => item.id === id);
-
-                if (existingItem) {
-                    existingItem.quantity += parseInt(qty);
-                } else {
-                    this.cart.push({
-                        id: id,
-                        name: itemName,
-                        price: parseFloat(itemPrice),
-                        quantity: parseInt(qty)
-                    });
-                }
-
-                this.saveCart();
-                this.isCartOpen = true;
-
-                // Limpiar selección si era un menú armado
-                if(this.activeTab === 'menu_del_dia' && itemName.includes('Menú:')) {
-                     this.selectedEntrada = null;
-                     this.selectedEntradaPrice = 0;
-                     this.selectedFondo = null;
-                     this.selectedFondoPrice = 0;
-                     this.selectedRefresco = null;
-                     this.selectedRefrescoPrice = 0;
-
-                     // Truco para desmarcar los radio buttons visualmente
-                     document.querySelectorAll('input[type="radio"]').forEach(el => el.checked = false);
-                }
-            },
-
-            removeFromCart(id) {
-                this.cart = this.cart.filter(i => i.id !== id);
-                this.saveCart();
-            },
-
-            clearCart() {
-                this.cart = [];
-                this.saveCart();
-                this.isCartOpen = false;
-            },
-
-            saveCart() {
-                localStorage.setItem('ucss_food_cart', JSON.stringify(this.cart));
-                this.updateCartCounter();
-            },
-
-            updateCartCounter() {
-                let count = this.cart.reduce((acc, item) => acc + item.quantity, 0);
-                this.$dispatch('update-cart-count', { count: count });
-            },
-
-            get total() {
-                return this.cart.reduce((acc, item) => acc + (item.price * item.quantity), 0).toFixed(2);
+        initApp() {
+            const stored = localStorage.getItem('ucss_food_cart');
+            if (stored) {
+                this.cart = JSON.parse(stored);
             }
+            this.updateCartCounter();
+
+            window.addEventListener('open-cart-drawer', () => {
+                this.isCartOpen = true;
+            });
+        },
+
+        get totalMenuDelDia() {
+            let total = this.selectedEntradaPrice + this.selectedFondoPrice + this.selectedRefrescoPrice;
+            return total.toFixed(2);
+        },
+
+        // ✅ NUEVA FUNCIÓN para el Menú del Día
+        addMenuDelDiaToCart() {
+            if (!this.selectedEntrada || !this.selectedFondo || !this.selectedRefresco) {
+                alert('Por favor selecciona Entrada, Segundo y Refresco.');
+                return;
+            }
+
+            // Crear nombre descriptivo
+            const menuName = `Menú: ${this.selectedEntrada} + ${this.selectedFondo} + ${this.selectedRefresco}`;
+            const menuPrice = parseFloat(this.totalMenuDelDia);
+
+            // ID único para este menú específico
+            const menuId = `menu_${this.selectedEntradaId}_${this.selectedFondoId}_${this.selectedRefrescoId}`;
+
+            // Buscar si ya existe
+            let existingItem = this.cart.find(item => item.id === menuId);
+
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                this.cart.push({
+                    id: menuId,
+                    name: menuName,
+                    price: menuPrice,
+                    quantity: 1,
+                    // ← IMPORTANTE: Guardar los IDs reales de los productos
+                    productIds: [
+                        this.selectedEntradaId,
+                        this.selectedFondoId,
+                        this.selectedRefrescoId
+                    ]
+                });
+            }
+
+            this.saveCart();
+            this.isCartOpen = true;
+
+            // Limpiar selección
+            this.selectedEntrada = null;
+            this.selectedEntradaPrice = 0;
+            this.selectedEntradaId = null;
+            this.selectedFondo = null;
+            this.selectedFondoPrice = 0;
+            this.selectedFondoId = null;
+            this.selectedRefresco = null;
+            this.selectedRefrescoPrice = 0;
+            this.selectedRefrescoId = null;
+
+            document.querySelectorAll('input[type="radio"]').forEach(el => el.checked = false);
+        },
+
+        // Función para productos individuales
+        addToCart(id, itemName, itemPrice, qty = 1) {
+            if (!id || isNaN(id)) {
+                console.error('ID inválido:', id);
+                alert('Error: ID de producto inválido');
+                return;
+            }
+
+            let existingItem = this.cart.find(item => item.id === id);
+
+            if (existingItem) {
+                existingItem.quantity += parseInt(qty);
+            } else {
+                this.cart.push({
+                    id: parseInt(id),
+                    name: itemName,
+                    price: parseFloat(itemPrice),
+                    quantity: parseInt(qty)
+                });
+            }
+
+            this.saveCart();
+            this.isCartOpen = true;
+        },
+
+        removeFromCart(id) {
+            this.cart = this.cart.filter(i => i.id !== id);
+            this.saveCart();
+        },
+
+        clearCart() {
+            this.cart = [];
+            this.saveCart();
+            this.isCartOpen = false;
+        },
+
+        saveCart() {
+            localStorage.setItem('ucss_food_cart', JSON.stringify(this.cart));
+            this.updateCartCounter();
+        },
+
+        updateCartCounter() {
+            let count = this.cart.reduce((acc, item) => acc + item.quantity, 0);
+            this.$dispatch('update-cart-count', { count: count });
+        },
+
+        get total() {
+            return this.cart.reduce((acc, item) => acc + (item.price * item.quantity), 0).toFixed(2);
         }
     }
+}
 </script>
 </x-app-layout>

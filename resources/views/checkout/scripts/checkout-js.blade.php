@@ -1,21 +1,20 @@
-{{-- resources/views/checkout/scripts/checkout.js.blade.php --}}
+{{-- resources/views/checkout/scripts/checkout-js.blade.php --}}
 <script>
     function checkoutHandler() {
         return {
             processing: false,
             errorMessage: '',
+            showSuccessToast: false, // ⬅️ Toast en lugar de modal
+            redirectCountdown: 5, // ⬅️ Contador de 5 segundos
             cart: [],
             total: 0,
-            paymentMethod: 'card', // 'card', 'yape', 'plin'
+            paymentMethod: 'card',
             payment: {
-                // Tarjeta
                 cardNumber: '',
                 expiry: '',
                 cvc: '',
-                // Yape
                 yapeNumber: '',
                 yapeOperation: '',
-                // Plin
                 plinNumber: '',
                 plinOperation: ''
             },
@@ -31,13 +30,14 @@
                 const storedCart = localStorage.getItem('ucss_food_cart');
                 this.cart = storedCart ? JSON.parse(storedCart) : [];
                 this.calculateTotal();
+
+                console.log('Carrito cargado:', JSON.stringify(this.cart, null, 2));
             },
 
             calculateTotal() {
                 this.total = this.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             },
 
-            // ============ VALIDACIÓN DE CAMPOS ============
             filterNumbers(field, max) {
                 let val = this.payment[field].replace(/\D/g, '');
                 this.payment[field] = val.slice(0, max);
@@ -53,7 +53,6 @@
                 this.errors.expiry = '';
             },
 
-            // ============ VALIDACIÓN POR MÉTODO DE PAGO ============
             validateCard() {
                 let isValid = true;
                 this.errors = { cardNumber: '', expiry: '', cvc: '', yapeNumber: '', plinNumber: '' };
@@ -123,7 +122,6 @@
                 return false;
             },
 
-            // ============ PROCESAR PAGO ============
             async processPayment() {
                 this.errorMessage = '';
 
@@ -135,38 +133,82 @@
                 this.processing = true;
 
                 try {
+                    const cartFormatted = this.cart.map(item => {
+                        const cartItem = {
+                            id: item.id,
+                            label: item.name,
+                            price: item.price,
+                            qty: item.quantity
+                        };
+
+                        if (item.productIds && Array.isArray(item.productIds)) {
+                            cartItem.productIds = item.productIds;
+                        }
+
+                        return cartItem;
+                    });
+
+                    console.log('Carrito formateado para envío:', JSON.stringify(cartFormatted, null, 2));
+
+                    const payload = {
+                        paymentMethod: this.paymentMethod,
+                        cart: cartFormatted,
+                        paymentData: this.payment
+                    };
+
+                    console.log('Payload completo:', JSON.stringify(payload, null, 2));
+
                     const response = await fetch("{{ route('checkout.process') }}", {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': "{{ csrf_token() }}"
                         },
-                        body: JSON.stringify({
-                            paymentMethod: this.paymentMethod,
-                            cart: this.cart.map(item => ({
-                                id: item.id,
-                                label: item.name,
-                                price: item.price,
-                                qty: item.quantity
-                            })),
-                            paymentData: this.payment
-                        })
+                        body: JSON.stringify(payload)
                     });
 
                     const data = await response.json();
+                    console.log('Respuesta del servidor:', data);
 
                     if (data.success) {
-                        alert(`¡Pago Exitoso con ${this.paymentMethod.toUpperCase()}!`);
+                        // Mostrar el toast
+                        this.showSuccessToast = true;
+
+                        // Limpiar el carrito
                         localStorage.removeItem('ucss_food_cart');
-                        window.location.href = "/";
+                        this.cart = [];
+
+                        // Iniciar cuenta regresiva de 5 segundos
+                        this.startRedirectCountdown();
+
                     } else {
                         throw new Error(data.message || 'Error del servidor');
                     }
                 } catch (error) {
+                    console.error('Error en processPayment:', error);
                     this.errorMessage = error.message;
                 } finally {
                     this.processing = false;
                 }
+            },
+
+            // ⬇️ NUEVA FUNCIÓN: Contador regresivo
+            startRedirectCountdown() {
+                this.redirectCountdown = 5;
+
+                const interval = setInterval(() => {
+                    this.redirectCountdown--;
+
+                    if (this.redirectCountdown <= 0) {
+                        clearInterval(interval);
+                        this.redirectToOrders();
+                    }
+                }, 1000); // Cada 1 segundo
+            },
+
+            // ⬇️ NUEVA FUNCIÓN: Redirigir a Mis Pedidos
+            redirectToOrders() {
+                window.location.href = "{{ route('orders.index') }}";
             }
         }
     }

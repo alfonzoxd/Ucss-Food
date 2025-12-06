@@ -20,7 +20,10 @@
                            name="entrada"
                            x-model="selectedEntrada"
                            value="{{ $entrada['label'] }}"
-                           @change="selectedEntradaPrice = {{ $entrada['price'] }}"
+                           @change="
+                               selectedEntradaPrice = {{ $entrada['price'] }};
+                               selectedEntradaId = {{ $entrada['id'] }};
+                           "
                            class="peer hidden">
 
                     <div class="bg-white border-2 border-slate-100 rounded-xl sm:rounded-2xl overflow-hidden transition-all duration-300 h-full flex flex-col hover:border-sky-400 hover:shadow-xl peer-checked:border-sky-600 peer-checked:ring-2 sm:peer-checked:ring-4 peer-checked:ring-sky-200 peer-checked:shadow-2xl peer-checked:shadow-sky-200/50 peer-checked:scale-105">
@@ -54,7 +57,10 @@
                            name="fondo"
                            x-model="selectedFondo"
                            value="{{ $fondo['label'] }}"
-                           @change="selectedFondoPrice = {{ $fondo['price'] }}"
+                           @change="
+                               selectedFondoPrice = {{ $fondo['price'] }};
+                               selectedFondoId = {{ $fondo['id'] }};
+                           "
                            class="peer hidden"
                            :disabled="!selectedEntrada">
 
@@ -89,7 +95,10 @@
                            name="refresco"
                            x-model="selectedRefresco"
                            value="{{ $refresco['label'] }}"
-                           @change="selectedRefrescoPrice = {{ $refresco['price'] }}"
+                           @change="
+                               selectedRefrescoPrice = {{ $refresco['price'] }};
+                               selectedRefrescoId = {{ $refresco['id'] }};
+                           "
                            class="peer hidden"
                            :disabled="!selectedFondo">
 
@@ -116,6 +125,8 @@
     </div>
 
 </div>
+
+{{-- BOTÓN FLOTANTE CORREGIDO - USA addMenuDelDiaToCart() --}}
 <div x-show="selectedEntrada && selectedFondo && selectedRefresco"
      x-transition:enter="transition ease-[cubic-bezier(0.34,1.56,0.64,1)] duration-500"
      x-transition:enter-start="opacity-0 translate-y-20 scale-90"
@@ -123,11 +134,7 @@
      class="fixed bottom-4 sm:bottom-6 left-0 right-0 z-50 flex justify-center px-3 sm:px-4 pointer-events-none">
 
     <button
-        @click="addToCart(
-            Date.now(),
-            'Menú: ' + selectedEntrada + ' + ' + selectedFondo + ' + ' + selectedRefresco,
-            totalMenuDelDia
-        )"
+        @click="addMenuDelDiaToCart()"
         class="pointer-events-auto bg-slate-900 text-white rounded-full p-2 pr-4 sm:pr-8 shadow-2xl shadow-sky-900/50 hover:scale-105 transition-transform duration-300 flex items-center gap-2 sm:gap-4 border-2 sm:border-4 border-white ring-1 ring-slate-200">
 
         <div class="bg-sky-500 text-white w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-black text-lg sm:text-xl shadow-inner">

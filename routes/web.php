@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\OrderController;
 
 Route::get('/', function () {
     if (\Illuminate\Support\Facades\Auth::check()) {
@@ -16,6 +17,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/menu', [MenuController::class, 'index'])->name('menu.index');
 
     Route::get('/img-local/{ref}', [MenuController::class, 'image'])->name('product.image');
+
+    Route::get('/mis-pedidos', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/pedido/factura/{ref}', [OrderController::class, 'downloadInvoice'])->name('orders.download_invoice');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

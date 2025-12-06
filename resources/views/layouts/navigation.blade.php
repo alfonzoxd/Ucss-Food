@@ -17,6 +17,7 @@
                 </div>
 
                 <div class="hidden md:flex space-x-2 ml-8">
+                    <!-- Enlace Inicio -->
                     <a href="{{ route('menu.index') }}"
                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold leading-5 transition-all duration-200
                        {{ request()->routeIs('menu.index') ? 'bg-white/20 text-white shadow-md' : 'text-sky-100 hover:text-white hover:bg-white/10' }}">
@@ -26,7 +27,10 @@
                         <span>Inicio</span>
                     </a>
 
-                    <a href="#" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold leading-5 transition-all duration-200 text-sky-100 hover:text-white hover:bg-white/10">
+                    <!-- Enlace Mis Pedidos (ACTUALIZADO) -->
+                    <a href="{{ route('orders.index') }}"
+                       class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold leading-5 transition-all duration-200
+                       {{ request()->routeIs('orders.index') ? 'bg-white/20 text-white shadow-md' : 'text-sky-100 hover:text-white hover:bg-white/10' }}">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
@@ -146,7 +150,8 @@
                 {{ __('Inicio') }}
             </x-responsive-nav-link>
 
-            <x-responsive-nav-link href="#" class="flex items-center gap-3">
+            <!-- Link Mis Pedidos Móvil (ACTUALIZADO) -->
+            <x-responsive-nav-link :href="route('orders.index')" :active="request()->routeIs('orders.index')" class="flex items-center gap-3">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                 </svg>

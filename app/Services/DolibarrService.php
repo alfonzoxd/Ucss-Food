@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class DolibarrService
 {
@@ -66,7 +67,6 @@ class DolibarrService
         return null;
     }
 
-
     public function getLocalImage($ref)
     {
         $baseDir = 'C:/dolibarr/dolibarr_documents/produit/';
@@ -100,35 +100,68 @@ class DolibarrService
     {
         // Estructura para Dolibarr
         $data = [
-            'socid' => $socid,
+            'socid' => (int)$socid,
             'date' => time(),
             'type' => 0, // 0 = Pedido estándar
             'lines' => $lines, // Array de productos
             'note_public' => 'Pedido generado desde Web UCSS FOOD',
         ];
 
+        Log::info('=== CREANDO PEDIDO EN DOLIBARR ===');
+        Log::info('Socid: ' . $socid);
+        Log::info('Número de líneas: ' . count($lines));
+        Log::info('Datos completos a enviar:', [
+            'json' => json_encode($data, JSON_PRETTY_PRINT)
+        ]);
+
         try {
-            $response = Http::withHeaders([
-                'DOLAPIKEY' => $this->apiKey,
-                'Accept' => 'application/json',
-            ])->post($this->baseUrl . '/orders', $data);
+            $response = Http::timeout(30)
+                ->withHeaders([
+                    'DOLAPIKEY' => $this->apiKey,
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                ])
+                ->post($this->baseUrl . '/orders', $data);
+
+            Log::info('=== RESPUESTA DE DOLIBARR ===');
+            Log::info('Status HTTP: ' . $response->status());
+            Log::info('Body completo: ' . $response->body());
 
             if ($response->successful()) {
-                return $response->json(); // Devuelve el ID del pedido (string o int)
+                $result = $response->json();
+                Log::info('Pedido creado exitosamente', ['result' => $result]);
+
+                // Extraer el ID del pedido
+                if (is_numeric($result)) {
+                    return $result;
+                } elseif (is_array($result) && isset($result['id'])) {
+                    return $result['id'];
+                } elseif (is_string($result) && is_numeric($result)) {
+                    return $result;
+                }
+
+                return $result;
+            } else {
+                // Log detallado del error
+                Log::error('=== ERROR EN CREACIÓN DE PEDIDO ===');
+                Log::error('Status: ' . $response->status());
+                Log::error('Body: ' . $response->body());
+
+                $errorData = $response->json();
+                if (isset($errorData['error'])) {
+                    Log::error('Error específico: ' . json_encode($errorData['error']));
+                }
             }
 
-            // Para debuggear si falla
-            // \Log::error('Error creando pedido Dolibarr: ' . $response->body());
         } catch (\Exception $e) {
-            return null;
+            Log::error('=== EXCEPCIÓN AL CREAR PEDIDO ===');
+            Log::error('Mensaje: ' . $e->getMessage());
+            Log::error('Archivo: ' . $e->getFile() . ' línea ' . $e->getLine());
         }
 
         return null;
     }
 
-    /**
-     * Validar el pedido para que descuente Stock
-     */
     public function validateOrder($orderId, $warehouseId = 1)
     {
         $data = [
@@ -146,7 +179,6 @@ class DolibarrService
             return false;
         }
     }
-
 
     public function findThirdPartyByEmail($email)
     {
@@ -176,4 +208,108 @@ class DolibarrService
         return null;
     }
 
+    /**
+     * 1. OBTENER PEDIDOS (Esto ya te funcionaba, lo dejamos igual pero protegido)
+     */
+    public function getOrdersByThirdParty($socid)
+    {
+        if (!$socid) return [];
+
+        // Para pedidos, 'thirdparty_ids' suele funcionar bien
+        $params = [
+            'sortfield'      => 't.date_commande',
+            'sortorder'      => 'DESC',
+            'limit'          => 100,
+            'thirdparty_ids' => $socid
+        ];
+
+        try {
+            $response = Http::withHeaders([
+                'DOLAPIKEY' => $this->apiKey,
+                'Accept'    => 'application/json',
+            ])->get($this->baseUrl . '/orders', $params);
+
+            return $response->successful() ? $response->json() : [];
+        } catch (\Exception $e) {
+            Log::error('Error buscando pedidos: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * 2. OBTENER FACTURAS (Aquí está el arreglo CRITICO)
+     * Dolibarr NO devuelve facturas con 'thirdparty_ids', OBLIGATORIAMENTE requiere 'sqlfilters'
+     */
+    public function getInvoicesByThirdParty($socid)
+    {
+        if (!$socid) return [];
+
+        // Sintaxis estricta para el filtro SQL de Dolibarr
+        $sqlFilter = "(t.fk_soc:=:" . $socid . ")";
+
+        $params = [
+            'sortfield'  => 't.datec',
+            'sortorder'  => 'DESC',
+            'limit'      => 100,
+            'sqlfilters' => $sqlFilter // <--- ESTO ES LA CLAVE
+        ];
+
+        try {
+            $response = Http::withHeaders([
+                'DOLAPIKEY' => $this->apiKey,
+                'Accept'    => 'application/json',
+            ])->get($this->baseUrl . '/invoices', $params);
+
+            return $response->successful() ? $response->json() : [];
+        } catch (\Exception $e) {
+            Log::error('Error buscando facturas: ' . $e->getMessage());
+            return [];
+        }
+    }
+    public function downloadDocument($documentPath)
+{
+    // El documentPath viene en formato: facture/TC1-2511-0001/TC1-2511-0001.pdf
+    // Necesitamos extraer el modulepart y el filename
+
+    $parts = explode('/', $documentPath);
+    $modulepart = $parts[0]; // 'facture'
+    $filename = implode('/', array_slice($parts, 1)); // 'TC1-2511-0001/TC1-2511-0001.pdf'
+
+    Log::info('Intentando descargar documento:', [
+        'path' => $documentPath,
+        'modulepart' => $modulepart,
+        'filename' => $filename
+    ]);
+
+    try {
+        $response = Http::withHeaders([
+            'DOLAPIKEY' => $this->apiKey,
+            'Accept'    => 'application/pdf',
+        ])->get($this->baseUrl . '/documents/download', [
+            'modulepart' => $modulepart,
+            'original_file' => $filename
+        ]);
+
+        if ($response->successful()) {
+            Log::info('Documento descargado exitosamente');
+            return $response->body();
+        }
+
+        Log::error('Error en respuesta de Dolibarr:', [
+            'status' => $response->status(),
+            'body' => $response->body()
+        ]);
+
+        throw new \Exception('No se pudo descargar el documento: ' . $response->status());
+
+    } catch (\Exception $e) {
+        Log::error('Dolibarr download document error:', [
+            'path' => $documentPath,
+            'modulepart' => $modulepart,
+            'filename' => $filename,
+            'error' => $e->getMessage()
+        ]);
+        throw $e;
+    }
+}
 }
