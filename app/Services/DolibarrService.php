@@ -16,6 +16,24 @@ class DolibarrService
         $this->apiKey = env('DOLIBARR_API_KEY');
     }
 
+    // En App\Services\DolibarrService.php
+
+public function getProduct($id)
+{
+    try {
+        $response = Http::withHeaders([
+            'DOLAPIKEY' => $this->apiKey,
+            'Accept'    => 'application/json',
+        ])->get($this->baseUrl . '/products/' . $id);
+
+        if ($response->successful()) {
+            return $response->json();
+        }
+    } catch (\Exception $e) {
+        Log::error('Error obteniendo producto ' . $id . ': ' . $e->getMessage());
+    }
+    return null;
+}
     public function getProductsByCategory($categoryId)
     {
         $sqlFilter = "(t.rowid:IN:SELECT fk_product FROM llx_categorie_product WHERE fk_categorie=" . $categoryId . ")";

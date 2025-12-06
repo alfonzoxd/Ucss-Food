@@ -1,11 +1,12 @@
-{{-- resources/views/checkout/scripts/checkout-js.blade.php --}}
+// Reemplazar todo el contenido de: resources/views/checkout/scripts/checkout-js.blade.php
+
 <script>
     function checkoutHandler() {
         return {
             processing: false,
             errorMessage: '',
-            showSuccessToast: false, // ⬅️ Toast en lugar de modal
-            redirectCountdown: 5, // ⬅️ Contador de 5 segundos
+            showSuccessToast: false,
+            redirectCountdown: 5,
             cart: [],
             total: 0,
             paymentMethod: 'card',
@@ -125,8 +126,15 @@
             async processPayment() {
                 this.errorMessage = '';
 
+                // Validar formulario
                 if (!this.validateForm()) {
                     this.errorMessage = 'Por favor corrige los campos marcados en rojo.';
+                    return;
+                }
+
+                // Validar que haya productos en el carrito
+                if (!this.cart || this.cart.length === 0) {
+                    this.errorMessage = 'Tu carrito está vacío. Agrega productos antes de pagar.';
                     return;
                 }
 
@@ -171,15 +179,17 @@
                     console.log('Respuesta del servidor:', data);
 
                     if (data.success) {
-                        // Mostrar el toast
+                        // IMPORTANTE: Mostrar la notificación PRIMERO
                         this.showSuccessToast = true;
 
-                        // Limpiar el carrito
-                        localStorage.removeItem('ucss_food_cart');
-                        this.cart = [];
-
-                        // Iniciar cuenta regresiva de 5 segundos
+                        // Iniciar cuenta regresiva
                         this.startRedirectCountdown();
+
+                        // Limpiar el carrito DESPUÉS de mostrar la notificación
+                        setTimeout(() => {
+                            localStorage.removeItem('ucss_food_cart');
+                            this.cart = [];
+                        }, 500); // Esperar medio segundo antes de limpiar
 
                     } else {
                         throw new Error(data.message || 'Error del servidor');
@@ -192,7 +202,6 @@
                 }
             },
 
-            // ⬇️ NUEVA FUNCIÓN: Contador regresivo
             startRedirectCountdown() {
                 this.redirectCountdown = 5;
 
@@ -203,10 +212,9 @@
                         clearInterval(interval);
                         this.redirectToOrders();
                     }
-                }, 1000); // Cada 1 segundo
+                }, 1000);
             },
 
-            // ⬇️ NUEVA FUNCIÓN: Redirigir a Mis Pedidos
             redirectToOrders() {
                 window.location.href = "{{ route('orders.index') }}";
             }

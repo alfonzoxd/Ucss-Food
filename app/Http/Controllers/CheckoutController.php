@@ -96,15 +96,22 @@ class CheckoutController extends Controller
                     $pricePerItem = (float)$item['price'] / count($item['productIds']);
 
                     foreach ($item['productIds'] as $productId) {
-                        $lines[] = [
-                            'fk_product'   => (int)$productId,
-                            'qty'          => (float)$item['qty'],
-                            'subprice'     => round($pricePerItem, 2),
-                            'tva_tx'       => 0,
-                            'product_type' => 0,
-                            'desc'         => isset($item['label']) ? $item['label'] : ''
-                        ];
-                    }
+
+    // 1. Buscamos el precio real de este producto en Dolibarr
+    $prodInfo = $this->dolibarr->getProduct($productId);
+
+    // Si encontramos el producto, usamos su precio base ('price'), si no, ponemos 0
+    $realPrice = $prodInfo ? (float)$prodInfo['price'] : 0;
+
+    $lines[] = [
+        'fk_product'   => (int)$productId,
+        'qty'          => (float)$item['qty'],
+        'subprice'     => $realPrice, // <--- USAMOS EL PRECIO REAL (0, 2, o 9)
+        'tva_tx'       => 0,
+        'product_type' => 0,
+        'desc'         => isset($item['label']) ? $item['label'] . ' (Parte del menú)' : ''
+    ];
+}
                 } else {
                     // Es un producto individual normal
                     // Validar que el ID sea numérico
@@ -215,5 +222,5 @@ class CheckoutController extends Controller
         }
     }
 
-    
+
 }
